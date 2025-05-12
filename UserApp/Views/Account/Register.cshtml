@@ -10,28 +10,82 @@
 	<div class="account-box">
 		<h2 class="text-center mb-4">Register</h2>
 		<form asp-action="Register" method="post">
-			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<div asp-validation-summary="All" class="text-danger"></div>
+
 			<div class="mb-3">
-				<label asp-for="Name" class="form-label"></label>
-				<input asp-for="Name" class="form-control" />
-				<span asp-validation-for="Name" class="text-danger"></span>
+				<label asp-for="FirstName" class="form-label"></label>
+				<input asp-for="FirstName" class="form-control" />
+				<span asp-validation-for="FirstName" class="text-danger"></span>
 			</div>
+
+			<div class="mb-3">
+				<label asp-for="LastName" class="form-label"></label>
+				<input asp-for="LastName" class="form-control" />
+				<span asp-validation-for="LastName" class="text-danger"></span>
+			</div>
+
+			<div class="mb-3">
+				<label asp-for="UserName" class="form-label"></label>
+				<input asp-for="UserName" class="form-control"/>
+				<span id="usernameStatus" class="form-text"></span>
+				<span asp-validation-for="UserName" class="text-danger"></span>
+			</div>
+
 			<div class="mb-3">
 				<label asp-for="Email" class="form-label"></label>
-				<input asp-for="Email" class="form-control" />
+				<input asp-for="Email" class="form-control" id="emailInput" oninput="checkEmailAvailability()" />
+				<span id="emailStatus" class="form-text"></span>
 				<span asp-validation-for="Email" class="text-danger"></span>
 			</div>
+
+			<div class="mb-3">
+				<label asp-for="DateOfBirth" class="form-label"></label>
+				<input asp-for="DateOfBirth" type="date" class="form-control" id="dobInput" oninput="checkAge()" />
+				<span id="ageStatus" class="text-danger"></span>
+				<span asp-validation-for="DateOfBirth" class="text-danger"></span>
+			</div>
+
+			<div class="mb-3">
+				<label asp-for="Sex" class="form-label"></label>
+				<select asp-for="Sex" class="form-control">
+					<option value="" disabled selected hidden>Please choose an option</option>
+					<option value="Male">Male</option>
+					<option value="Female">Female</option>
+				</select>
+			</div>
+
 			<div class="mb-3">
 				<label asp-for="Password" class="form-label"></label>
-				<input asp-for="Password" class="form-control" />
+				<div class="input-group">
+					<input asp-for="Password" class="form-control" id="passwordInput" />
+					<button class="btn btn-outline-secondary" type="button"
+							onmousedown="showPassword('passwordInput')"
+							onmouseup="hidePassword('passwordInput', this)"
+							onmouseleave="hidePassword('passwordInput', this)"
+							title="Hold to reveal password">
+						👁️
+					</button>
+				</div>
 				<span asp-validation-for="Password" class="text-danger"></span>
 			</div>
+
 			<div class="mb-3">
 				<label asp-for="ConfirmPassword" class="form-label"></label>
-				<input asp-for="ConfirmPassword" class="form-control" />
+				<div class="input-group">
+					<input asp-for="ConfirmPassword" class="form-control" id="confirmPasswordInput" />
+					<button class="btn btn-outline-secondary" type="button"
+							onmousedown="showPassword('confirmPasswordInput')"
+							onmouseup="hidePassword('confirmPasswordInput', this)"
+							onmouseleave="hidePassword('confirmPasswordInput', this)"
+							title="Hold to reveal password">
+						👁️
+					</button>
+				</div>
 				<span asp-validation-for="ConfirmPassword" class="text-danger"></span>
 			</div>
+
 			<input type="submit" value="Register" class="btn btn-success w-100 p-2" />
+
 			<p class="text-center mt-2">
 				Already have an account? <a asp-controller="Account" asp-action="Login" class="text-decoration-none">Login</a>
 			</p>
@@ -46,4 +100,123 @@
 	@{
 		await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
 	}
+
+	<script>
+		function showPassword(id) {
+			document.getElementById(id).type = 'text';
+		}
+
+		function hidePassword(id, btn) {
+			document.getElementById(id).type = 'password';
+			bootstrap.Tooltip.getInstance(btn)?.hide();
+		}
+
+		function checkUsernameAvailability() {
+			var username = document.getElementById('UserName').value.trim();
+			var status = document.getElementById('usernameStatus');
+
+			if (username.length === 0) {
+				status.innerHTML = '';
+				return;
+			}
+
+			fetch(`/Account/checkUsernameAvailability?username=${encodeURIComponent(username)}`)
+				.then(response => response.json())
+				.then(data => {
+					if (data.available) {
+						status.innerHTML = '✔️ Username is available';
+						status.style.color = 'green';
+					} else {
+						status.innerHTML = `❌ Username taken. Try <a href="#" id="suggestionLink" style="text-decoration: underline;">${data.suggestion}</a>`;
+						status.style.color = 'red';
+
+						document.getElementById('suggestionLink').addEventListener('click', function (e) {
+							e.preventDefault();
+							document.getElementById('UserName').value = data.suggestion;
+							status.innerHTML = '✔️ Username is available';
+							status.style.color = 'green';
+						});
+					}
+				})
+				.catch(error => {
+					console.error('Error checking username:', error);
+					status.innerHTML = '';
+				});
+		}
+
+		let debounceTimer;
+		const debouncedCheckUsername = () => {
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(checkUsernameAvailability, 300);
+		};
+
+		function checkEmailAvailability() {
+			var email = document.getElementById('emailInput').value;
+			var status = document.getElementById('emailStatus');
+
+			if (email.length > 0) {
+				fetch(`/Account/CheckEmailAvailability?email=${encodeURIComponent(email)}`)
+					.then(response => response.json())
+					.then(data => {
+						if (data.available) {
+							status.innerHTML = '✔️ Email is available';
+							status.style.color = 'green';
+						} else {
+							status.innerHTML = '❌ Email already taken';
+							status.style.color = 'red';
+						}
+					})
+					.catch(error => {
+						console.error('Error checking email:', error);
+						status.innerHTML = '';
+					});
+			}
+		}
+
+		function checkAge() {
+			var dob = document.getElementById('dobInput').value;
+			var ageStatus = document.getElementById('ageStatus');
+			var birthDate = new Date(dob);
+			var today = new Date();
+			var age = today.getFullYear() - birthDate.getFullYear();
+			var m = today.getMonth() - birthDate.getMonth();
+
+			if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+				age--;
+			}
+
+			if (age < 12) {
+				ageStatus.innerHTML = '❌ You must be at least 12 years old';
+			} else {
+				ageStatus.innerHTML = '';
+			}
+		}
+
+		document.addEventListener('DOMContentLoaded', function () {
+			document.getElementById('UserName').addEventListener('input', debouncedCheckUsername);
+
+			const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+			tooltipTriggerList.forEach(function (el) {
+				new bootstrap.Tooltip(el, {
+					delay: { show: 0, hide: 0 },
+					trigger: 'hover'
+				});
+			});
+		});
+	</script>
+
+	<style>
+		.tooltip-inner {
+			background-color: #343a40;
+			color: #fff;
+			padding: 8px 12px;
+			font-size: 0.9rem;
+			border-radius: 6px;
+			box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+		}
+
+		.tooltip.bs-tooltip-left .tooltip-arrow::before {
+			border-left-color: #343a40;
+		}
+	</style>
 }

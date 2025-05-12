@@ -4,9 +4,10 @@ namespace UserApp.ViewModels
 {
     public class LoginViewModel
     {
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress]
-        public string Email { get; set; }
+        [Required(ErrorMessage = "Username/Email is required")]
+        [Display(Name = "Username/Email")]
+        public string UserNameOrEmail { get; set; }
+
         [Required(ErrorMessage = "Password is required")]
         [DataType(DataType.Password)]
         public string Password { get; set; }

@@ -12,15 +12,28 @@
 		<form asp-action="Login" method="post">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			<div class="mb-3">
-				<label asp-for="Email" class="form-label"></label>
-				<input asp-for="Email" class="form-control" />
-				<span asp-validation-for="Email" class="text-danger"></span>
+				<label asp-for="UserNameOrEmail" class="form-label"></label>
+				<input asp-for="UserNameOrEmail" class="form-control" />
+				<span asp-validation-for="UserNameOrEmail" class="text-danger"></span>
 			</div>
 			<div class="mb-3">
 				<label asp-for="Password" class="form-label"></label>
-				<input asp-for="Password" class="form-control" />
+
+				<div class="input-group">
+					<input asp-for="Password" class="form-control" id="passwordInput" />
+					<button class="btn btn-outline-secondary" type="button"
+							onmousedown="showPassword('passwordInput')"
+							onmouseup="hidePassword('passwordInput', this)"
+							onmouseleave="hidePassword('passwordInput', this)"
+							data-bs-toggle="tooltip" data-bs-placement="left" title="Hold to reveal password">
+						👁️
+					</button>
+
+				</div>
+
 				<span asp-validation-for="Password" class="text-danger"></span>
 			</div>
+
 			<div class="float-end">
 				<a asp-controller="Account" asp-action="VerifyEmail" class="text-decoration-none">
 					Forgot password?
@@ -48,3 +61,53 @@
 		await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
 	}
 }
+
+<script>
+	function showPassword(id) {
+	  document.getElementById(id).type = 'text';
+	}
+
+	function hidePassword(id, btn) {
+	  document.getElementById(id).type = 'password';
+	  bootstrap.Tooltip.getInstance(btn)?.hide(); // Hide tooltip manually
+	}
+
+	document.addEventListener('DOMContentLoaded', function () {
+	  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+	  tooltipTriggerList.forEach(function (el) {
+		new bootstrap.Tooltip(el, {
+		  delay: { show: 0, hide: 0 },
+		  trigger: 'hover'
+		});
+	  });
+	});
+</script>
+
+
+<style>
+	.tooltip-inner {
+		background-color: #343a40; /* Dark gray */
+		color: #fff;
+		padding: 8px 12px;
+		font-size: 0.9rem;
+		border-radius: 6px;
+		box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+	}
+
+	.tooltip.bs-tooltip-top .tooltip-arrow::before {
+		border-top-color: #343a40;
+	}
+
+	.tooltip.bs-tooltip-left .tooltip-arrow::before {
+		border-left-color: #343a40;
+	}
+
+	.tooltip.bs-tooltip-right .tooltip-arrow::before {
+		border-right-color: #343a40;
+	}
+
+	.tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+		border-bottom-color: #343a40;
+	}
+</style>
+
