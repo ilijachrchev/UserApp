@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace UserApp.Controllers
 {
+    [ApiController]
+    [Route("[controller]")]
     public class AccountController : Controller
     {
         private readonly SignInManager<Users> signInManager;
@@ -95,67 +97,50 @@ namespace UserApp.Controllers
             return View();
         }
 
-        [HttpPost]
 
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-            // validate username format
-            if (string.IsNullOrWhiteSpace(model.UserName))
+            if (!ModelState.IsValid)
             {
-                ModelState.AddModelError(nameof(model.UserName), "Username is required.");
-                return View(model);
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { errors });
             }
 
-            // validate username format
-            var usernameRegex = new Regex(@"^[a-zA-Z0-9]+$");
-            if (!usernameRegex.IsMatch(model.UserName))
-            {
-                ModelState.AddModelError(nameof(model.UserName), "Username can only contain letter and numbers");
-                return View(model);
-            }
-
-
-            // checking users age
+            // Check user's age
             var today = DateTime.Today;
             var age = today.Year - model.DateOfBirth.Year;
             if (model.DateOfBirth > today.AddYears(-age)) age--;
-            if (age < 12)
+            if (age < 1)
             {
-                ModelState.AddModelError("DateOfBirth", "You must be at least 12 years old to register.");
-                return View(model);
+                return BadRequest(new { error = "You must be at least 12 years old to register." });
             }
 
-            if (ModelState.IsValid)
+            Users users = new Users
             {
-                Users users = new Users
-                {
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    Email = model.Email,
-                    UserName = model.UserName,
-                    PhoneNumber = model.PhoneNumber,
-                    DateOfBirth = model.DateOfBirth,
-                    Sex = model.Sex
-                };
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                AccUserName = model.AccUserName,
+                Email = model.Email,
+                PhoneNumber = model.PhoneNumber,
+                DateOfBirth = model.DateOfBirth,
+                Sex = model.Sex,
+                UserName = model.Email
+            };
 
-                var result = await userManager.CreateAsync(users, model.Password);
+            var result = await userManager.CreateAsync(users, model.Password);
 
-                if (result.Succeeded)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
-                else
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        ModelState.AddModelError("", error.Description);
-                    }
-
-                    return View(model);
-                }
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "Registration successful!" });
             }
-            return View(model);
+            else
+            {
+                var errors = result.Errors.Select(e => e.Description);
+                return BadRequest(new { errors });
+            }
         }
+
 
         public IActionResult VerifyEmail()
         {
@@ -374,35 +359,6 @@ namespace UserApp.Controllers
             return Json(new { available = !isEmailTaken });
         }
 
-        [HttpGet]
-        public JsonResult CheckUsernameAvailability(string username)
-        {
-            var isUsernameTaken = _context.Users.Any(u => u.UserName == username);
-            return Json(new { available = !isUsernameTaken });
-        }
-
-        [HttpGet]
-        public async Task<JsonResult> CheckUsername(string username)
-        {
-            bool exists = await userManager.Users.AnyAsync(u => u.UserName == username);
-
-            if (!exists)
-            {
-                return Json(new { available = true, suggestion = username });
-            }
-
-            //generate suggestions by appeding random numbers
-
-            var random = new Random();
-            string suggestion;
-            do
-            {
-                suggestion = username + random.Next(1, 1000);
-                exists = await userManager.Users.AnyAsync(u => u.UserName == suggestion);
-            } while (exists);
-
-            return Json(new { available = false, suggestion });
-        }
 
     }
 }

@@ -25,13 +25,6 @@
 			</div>
 
 			<div class="mb-3">
-				<label asp-for="UserName" class="form-label"></label>
-				<input asp-for="UserName" class="form-control"/>
-				<span id="usernameStatus" class="form-text"></span>
-				<span asp-validation-for="UserName" class="text-danger"></span>
-			</div>
-
-			<div class="mb-3">
 				<label asp-for="Email" class="form-label"></label>
 				<input asp-for="Email" class="form-control" id="emailInput" oninput="checkEmailAvailability()" />
 				<span id="emailStatus" class="form-text"></span>
@@ -111,38 +104,6 @@
 			bootstrap.Tooltip.getInstance(btn)?.hide();
 		}
 
-		function checkUsernameAvailability() {
-			var username = document.getElementById('UserName').value.trim();
-			var status = document.getElementById('usernameStatus');
-
-			if (username.length === 0) {
-				status.innerHTML = '';
-				return;
-			}
-
-			fetch(`/Account/checkUsernameAvailability?username=${encodeURIComponent(username)}`)
-				.then(response => response.json())
-				.then(data => {
-					if (data.available) {
-						status.innerHTML = '✔️ Username is available';
-						status.style.color = 'green';
-					} else {
-						status.innerHTML = `❌ Username taken. Try <a href="#" id="suggestionLink" style="text-decoration: underline;">${data.suggestion}</a>`;
-						status.style.color = 'red';
-
-						document.getElementById('suggestionLink').addEventListener('click', function (e) {
-							e.preventDefault();
-							document.getElementById('UserName').value = data.suggestion;
-							status.innerHTML = '✔️ Username is available';
-							status.style.color = 'green';
-						});
-					}
-				})
-				.catch(error => {
-					console.error('Error checking username:', error);
-					status.innerHTML = '';
-				});
-		}
 
 		let debounceTimer;
 		const debouncedCheckUsername = () => {
@@ -191,18 +152,6 @@
 				ageStatus.innerHTML = '';
 			}
 		}
-
-		document.addEventListener('DOMContentLoaded', function () {
-			document.getElementById('UserName').addEventListener('input', debouncedCheckUsername);
-
-			const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-			tooltipTriggerList.forEach(function (el) {
-				new bootstrap.Tooltip(el, {
-					delay: { show: 0, hide: 0 },
-					trigger: 'hover'
-				});
-			});
-		});
 	</script>
 
 	<style>

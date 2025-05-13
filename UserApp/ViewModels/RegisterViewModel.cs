@@ -11,8 +11,8 @@ namespace UserApp.ViewModels
         [Required(ErrorMessage = "LastName is required.")]
         public string LastName { get; set; }
 
-        [Required(ErrorMessage = "Username is required.")]
-        public string UserName { get; set; }
+        [Required(ErrorMessage = "LastName is required.")]
+        public string AccUserName { get; set; }
 
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress]
